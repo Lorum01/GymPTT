@@ -1,0 +1,14 @@
+name: gymtalk_token_server
+description: Rilascia i token di accesso LiveKit all'app GymTalk.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  crypto: ^3.0.7
+  dart_jsonwebtoken: ^2.14.0
+  http: ^1.6.0
+  shelf: ^1.4.1
+  shelf_router: ^1.1.4

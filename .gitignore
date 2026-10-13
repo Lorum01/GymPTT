@@ -1,0 +1,11 @@
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Segreti e dati locali del server (vedi anche server/.gitignore)
+.env
+*.jks
+*.keystore
+key.properties
