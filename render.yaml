@@ -1,0 +1,22 @@
+# Configurazione Render (Blueprint): server GymTalk, piano gratuito.
+# I valori segreti (sync: false) si inseriscono nel pannello di Render,
+# non vanno mai scritti qui.
+services:
+  - type: web
+    name: gymptt-server
+    runtime: docker
+    plan: free
+    region: frankfurt
+    rootDir: server
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      - key: DATABASE_URL
+        sync: false

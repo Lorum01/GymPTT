@@ -4,4 +4,8 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Solo nelle versioni di sviluppo: permette l'HTTP verso il server
+         locale sul PC. Le versioni release usano solo HTTPS. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

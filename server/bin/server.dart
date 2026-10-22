@@ -19,6 +19,8 @@
 //   LIVEKIT_API_KEY
 //   LIVEKIT_API_SECRET
 //   PORT                (opzionale, default 8080)
+//   DATABASE_URL        (opzionale) Postgres, es. Neon. Senza, i gruppi sono
+//                       salvati in server/data/groups.json
 
 import 'dart:convert';
 import 'dart:io';
@@ -26,6 +28,7 @@ import 'dart:io';
 import 'package:gymtalk_token_server/groups.dart';
 import 'package:gymtalk_token_server/identity.dart';
 import 'package:gymtalk_token_server/livekit.dart';
+import 'package:gymtalk_token_server/postgres_persistence.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_router/shelf_router.dart';
@@ -38,8 +41,14 @@ Future<void> main() async {
     apiSecret: _require(env, 'LIVEKIT_API_SECRET'),
   );
   final port = int.tryParse(env['PORT'] ?? '') ?? 8080;
-  final store =
-      GroupStore(File.fromUri(Platform.script.resolve('../data/groups.json')));
+  final databaseUrl = env['DATABASE_URL'] ?? '';
+  final store = await GroupStore.open(databaseUrl.isNotEmpty
+      ? await PostgresPersistence.connect(databaseUrl)
+      : FilePersistence(
+          File.fromUri(Platform.script.resolve('../data/groups.json'))));
+  stdout.writeln(databaseUrl.isNotEmpty
+      ? 'Gruppi salvati su Postgres'
+      : 'Gruppi salvati su file (server/data/groups.json)');
 
   final router = Router()
     ..get('/', (Request _) => Response.ok('GymTalk server attivo'))
@@ -49,7 +58,7 @@ Future<void> main() async {
       final me = _caller(body);
       if (me == null || _name(body) == null)
         return _error(400, 'Richiesta non valida');
-      final group = store.create(me);
+      final group = await store.create(me);
       return _json(200, {'code': group.code});
     })
     ..post('/token', (Request req) async {
@@ -89,7 +98,7 @@ Future<void> main() async {
           targetName.isEmpty ? target : targetName,
           DateTime.now().toUtc(),
         );
-        store.save();
+        await store.save(group);
         await livekit.removeParticipant(code, target);
         return _json(200, {'ok': true});
       });
@@ -98,7 +107,7 @@ Future<void> main() async {
       return _moderate(req, store, code, (group, me, target, body) async {
         if (!group.canManageBans(me)) return _forbidden();
         group.bans.remove(target);
-        store.save();
+        await store.save(group);
         return _json(200, {'ok': true});
       });
     })
@@ -112,7 +121,7 @@ Future<void> main() async {
           if (!group.canDemote(me, target)) return _forbidden();
           group.admins.remove(target);
         }
-        store.save();
+        await store.save(group);
         await livekit.updateRole(code, target, group.roleOf(target).name);
         return _json(200, {'ok': true});
       });

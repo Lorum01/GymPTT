@@ -53,6 +53,21 @@ Il server gestisce gruppi e ruoli: **host** (chi crea il gruppo), **admin** e me
 Host e admin possono espellere/bannare i membri e nominare admin; solo l'host può
 togliere admin e agire sugli admin. Le regole sono in `server/lib/groups.dart`.
 
+### 2b. Server online (Render + Neon, gratis)
+Così l'app funziona ovunque e il PC può restare spento.
+1. **Neon** (https://neon.tech): crea un progetto e copia la *connection string*
+   (`postgresql://...`).
+2. **Render** (https://render.com): *New → Blueprint*, scegli questo repository.
+   Render legge `render.yaml` e crea il servizio `gymptt-server`.
+3. Inserisci le variabili segrete: `LIVEKIT_URL`, `LIVEKIT_API_KEY`,
+   `LIVEKIT_API_SECRET`, `DATABASE_URL` (la stringa di Neon).
+4. A deploy finito, l'indirizzo è tipo `https://gymptt-server.onrender.com`;
+   `/health` deve rispondere `ok`.
+
+Con `DATABASE_URL` i gruppi vengono salvati su Postgres; senza, su file.
+Il piano gratuito di Render si sospende dopo ~15 minuti senza richieste: il primo
+ingresso in un gruppo può richiedere fino a un minuto, la voce non ne risente.
+
 ### 3. App
 ```bash
 cd app

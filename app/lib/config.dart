@@ -1,7 +1,8 @@
-/// Indirizzo del token server (cartella `server/`).
+/// Indirizzo del server GymTalk (cartella `server/`).
 ///
-/// In sviluppo: l'IP del PC sulla stessa Wi-Fi dei telefoni, es.
-///   flutter run --dart-define=TOKEN_SERVER=http://192.168.1.20:8080
+/// Server online (Render): flutter build apk --dart-define=TOKEN_SERVER=https://...
+/// Server sul PC, stessa Wi-Fi dei telefoni (solo versioni di sviluppo):
+///   flutter run --dart-define=TOKEN_SERVER=http://192.168.1.10:8080
 const tokenServerUrl = String.fromEnvironment(
   'TOKEN_SERVER',
   defaultValue: 'http://192.168.1.10:8080',

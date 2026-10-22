@@ -80,19 +80,26 @@ class Group {
       );
 }
 
-/// Gruppi salvati su file JSON: sopravvivono al riavvio del server.
+/// Dove vengono salvati i gruppi.
+abstract class GroupPersistence {
+  Future<List<Group>> loadAll();
+  Future<void> save(Group group);
+}
+
+/// Gruppi tenuti in memoria e salvati a ogni modifica: i gruppi sono pochi,
+/// quindi all'avvio si caricano tutti.
 class GroupStore {
-  GroupStore(this._file) {
-    if (_file.existsSync()) {
-      final list = jsonDecode(_file.readAsStringSync()) as List;
-      for (final g in list.cast<Map<String, dynamic>>()) {
-        final group = Group.fromJson(g);
-        _groups[group.code] = group;
-      }
+  GroupStore._(this._persistence);
+
+  static Future<GroupStore> open(GroupPersistence persistence) async {
+    final store = GroupStore._(persistence);
+    for (final g in await persistence.loadAll()) {
+      store._groups[g.code] = g;
     }
+    return store;
   }
 
-  final File _file;
+  final GroupPersistence _persistence;
   final _groups = <String, Group>{};
 
   static const _codeChars =
@@ -101,7 +108,7 @@ class GroupStore {
 
   Group? operator [](String code) => _groups[code];
 
-  Group create(String hostId) {
+  Future<Group> create(String hostId) async {
     String code;
     do {
       code =
@@ -110,11 +117,34 @@ class GroupStore {
     } while (_groups.containsKey(code));
     final group = Group(code, hostId);
     _groups[code] = group;
-    save();
+    await save(group);
     return group;
   }
 
-  void save() {
+  Future<void> save(Group group) => _persistence.save(group);
+}
+
+/// Salvataggio su file JSON, per l'uso in locale sul PC.
+class FilePersistence implements GroupPersistence {
+  FilePersistence(this._file);
+
+  final File _file;
+  final _groups = <String, Group>{};
+
+  @override
+  Future<List<Group>> loadAll() async {
+    if (!_file.existsSync()) return const [];
+    final list = jsonDecode(_file.readAsStringSync()) as List;
+    for (final g in list.cast<Map<String, dynamic>>()) {
+      final group = Group.fromJson(g);
+      _groups[group.code] = group;
+    }
+    return _groups.values.toList();
+  }
+
+  @override
+  Future<void> save(Group group) async {
+    _groups[group.code] = group;
     _file.parent.createSync(recursive: true);
     final tmp = File('${_file.path}.tmp')
       ..writeAsStringSync(

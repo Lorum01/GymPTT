@@ -1,0 +1,5 @@
+.env
+data/
+.dart_tool/
+build/
+Dockerfile
